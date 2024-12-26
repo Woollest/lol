@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LOL：ノーマル・フルパ診断</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #ffefba, #ffffff);
+            color: #333;
+            text-align: center;
+            margin: 50px auto;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #ffd700;
+            color: #333;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #ffc107;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .result {
+            font-weight: bold;
+            margin-top: 30px;
+            font-size: 1.5em;
+            background: rgba(255, 223, 186, 0.8);
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #question {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>ランク or フルパノーマル 診断</h1>
+    <div id="question">ランクをやりたいですか？</div>
+    <div>
+        <button onclick="nextQuestion(true)">Yes</button>
+        <button onclick="nextQuestion(false)">No</button>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script>
+        const questions = [
+            "外国人AFKを耐えられますか？",
+            "インキューが長くても耐えられますか？",
+            "オートフィルでサポートをやることを耐えられますか？",
+            "二分の一で喧嘩する味方に耐えられますか？",
+            "負けてる時に味方に怒られることに耐えられますか？",
+            "味方の機嫌を損ねると怒りだす味方に耐えられますか？"
+        ];
+
+        let currentQuestion = 0;
+        let canPlayRanked = true;
+
+        function nextQuestion(answer) {
+            if (!answer) {
+                canPlayRanked = false;
+                showResult();
+                return;
+            }
+
+            if (currentQuestion < questions.length) {
+                document.getElementById("question").innerText = questions[currentQuestion];
+                currentQuestion++;
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const resultDiv = document.getElementById("result");
+            if (canPlayRanked) {
+                resultDiv.innerText = "ランクに挑戦しよう！";
+            } else {
+                resultDiv.innerText = "フルパでノーマルを楽しもう！";
+            }
+            document.getElementById("question").style.display = "none";
+            document.querySelectorAll("button").forEach(btn => btn.style.display = "none");
+        }
+    </script>
+</body>
+</html>
