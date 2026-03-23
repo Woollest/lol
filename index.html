@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoL Skill Search - Woollest Pro</title>
+    <title>LoL Skill Search - Woollest Edition</title>
     <style>
         :root {
             --gold: #c89b3c;
             --dark-bg: #0a0a0c;
             --card-bg: #1e2328;
             --text: #f0e6d2;
+            --ult-color: #ff4e50;
         }
 
         body { 
@@ -21,9 +22,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
-        h1 { color: var(--gold); text-shadow: 0 0 10px rgba(200, 155, 60, 0.5); }
+        h1 { color: var(--gold); text-shadow: 0 0 10px rgba(200, 155, 60, 0.5); margin-bottom: 10px; }
 
         .search-container {
             width: 100%;
@@ -31,11 +33,14 @@
             position: sticky;
             top: 10px;
             z-index: 100;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
         }
 
         .search-box { 
             width: 100%; 
-            padding: 15px; 
+            padding: 15px 50px 15px 25px; 
             font-size: 18px; 
             background: #1e2328;
             border: 2px solid var(--gold);
@@ -43,7 +48,68 @@
             border-radius: 30px;
             outline: none;
             box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
+
+        .clear-btn {
+            position: absolute;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            background: #333;
+            color: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid var(--gold);
+            user-select: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .search-box:not(:placeholder-shown) + .clear-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .clear-btn:hover { background: var(--gold); color: var(--dark-bg); }
+
+        #welcome-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10vh;
+            text-align: center;
+        }
+
+        .welcome-icon { font-size: 50px; margin-bottom: 20px; opacity: 0.6; }
+
+        .suggestion-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            max-width: 500px;
+        }
+
+        .tag {
+            background: rgba(200, 155, 60, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .tag:hover { background: var(--gold); color: var(--dark-bg); }
 
         .grid { 
             display: grid; 
@@ -51,7 +117,6 @@
             gap: 20px; 
             width: 100%;
             max-width: 1200px;
-            margin-top: 30px;
         }
 
         .card { 
@@ -59,9 +124,13 @@
             padding: 20px; 
             border-radius: 4px; 
             border: 1px solid #3c3c41;
-            transition: transform 0.2s;
+            animation: fadeIn 0.4s ease;
         }
-        .card:hover { transform: translateY(-5px); border-color: var(--gold); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .champ-header { 
             display: flex; 
@@ -72,54 +141,106 @@
             padding-bottom: 10px;
         }
 
-        .champ-img { 
-            width: 64px; height: 64px; 
+        /* 画像コンテナの共通スタイル */
+        .img-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5); /* 画像読み込み前の背景 */
             border: 2px solid var(--gold);
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        /* チャンピオン画像のサイズ */
+        .champ-img-container { width: 64px; height: 64px; }
+
+        /* スキルアイコンのサイズ */
+        .skill-img-container { width: 54px; height: 54px; flex-shrink: 0; border-width: 1px; }
+
+        .fallback-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* 画像が読み込めなかった時にJavaScriptでクラスを追加する */
+        .image-load-error {
+            background-color: #333;
+            border-color: #555;
+        }
+        .image-load-error::after {
+            content: "LoL"; /* 画像の代わりに表示する文字 */
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.2em;
+            position: absolute;
+        }
+        .image-load-error .fallback-img {
+            display: none; /* エラー時は画像を隠す */
+        }
+
 
         .skill-item { 
             display: flex;
-            gap: 10px;
+            gap: 12px;
             background: rgba(0, 0, 0, 0.3); 
-            padding: 10px; 
+            padding: 12px; 
             margin-top: 10px; 
             border-radius: 4px; 
             font-size: 0.85em;
-            line-height: 1.5;
+            position: relative;
         }
 
-        .skill-icon {
-            width: 48px;
-            height: 48px;
-            flex-shrink: 0;
-            border: 1px solid #555;
+        .skill-key {
+            position: absolute; top: -5px; left: -5px;
+            background: #333; color: white;
+            padding: 2px 6px; font-weight: bold; font-size: 0.75em;
+            border: 1px solid var(--gold); border-radius: 3px; z-index: 1;
         }
+
+        .skill-key-r { background: var(--ult-color); border-color: #fff; }
 
         .skill-info { flex-grow: 1; }
 
         .highlight { color: var(--gold); font-weight: bold; display: block; margin-bottom: 4px; }
         
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .grid { grid-template-columns: 1fr; }
-        }
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <h1>LoL スキル詳細検索</h1>
+    <h1>LoL Skill Search</h1>
     
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-box" placeholder="キーワードを入力（例：チャーム、スネア、確定ダメージ）">
+        <input type="text" id="searchInput" class="search-box" placeholder="スキル効果を検索..." spellcheck="false">
+        <div id="clearBtn" class="clear-btn">×</div>
+    </div>
+
+    <div id="welcome-area">
+        <div class="welcome-icon">⚔️</div>
+        <p>キーワードを入力してスキルを探してみましょう</p>
+        <div class="suggestion-tags">
+            <span class="tag" onclick="setSearch('スタン')">スタン</span>
+            <span class="tag" onclick="setSearch('ノックアップ')">ノックアップ</span>
+            <span class="tag" onclick="setSearch('シールド')">シールド</span>
+            <span class="tag" onclick="setSearch('ステルス')">ステルス</span>
+            <span class="tag" onclick="setSearch('移動速度')">移動速度</span>
+            <span class="tag" onclick="setSearch('復活')">復活</span>
+            <span class="tag" onclick="setSearch('確定ダメージ')">確定ダメージ</span>
+        </div>
     </div>
     
     <div id="resultGrid" class="grid"></div>
 
     <script>
-        const PATCH = "14.5.1"; // 取得した最新パッチに合わせる
+        const PATCH = "14.5.1";
         let championData = {};
 
-        // JSON読み込み
         fetch('championFull.json')
             .then(response => response.json())
             .then(data => {
@@ -128,18 +249,44 @@
             });
 
         const input = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
         const grid = document.getElementById('resultGrid');
+        const welcomeArea = document.getElementById('welcome-area');
 
-        input.addEventListener('input', () => {
-            const query = input.value;
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            performSearch('');
+            input.focus();
+        });
+
+        function setSearch(word) {
+            input.value = word;
+            performSearch(word);
+        }
+
+        // 画像の読み込みエラーを検知してクラスを付与する関数
+        function handleImageError(imageElement) {
+            imageElement.parentElement.classList.add('image-load-error');
+        }
+
+        function performSearch(query) {
             grid.innerHTML = '';
-            if (query.length < 2) return;
+            
+            if (query.length < 2) {
+                welcomeArea.classList.remove('hidden');
+                return;
+            }
+
+            welcomeArea.classList.add('hidden');
 
             for (let key in championData) {
                 const champ = championData[key];
                 const allSkills = [
-                    { ...champ.passive, isPassive: true }, 
-                    ...champ.spells
+                    { ...champ.passive, keyType: 'P', isPassive: true },
+                    { ...champ.spells[0], keyType: 'Q' },
+                    { ...champ.spells[1], keyType: 'W' },
+                    { ...champ.spells[2], keyType: 'E' },
+                    { ...champ.spells[3], keyType: 'R' }
                 ];
                 
                 const matchedSkills = allSkills.filter(s => s.description.includes(query));
@@ -150,20 +297,30 @@
                     
                     let html = `
                         <div class="champ-header">
-                            <img class="champ-img" src="https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/champion/${champ.id}.png">
+                            <div class="img-container champ-img-container">
+                                <img class="fallback-img" 
+                                     src="https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/champion/${champ.id}.png"
+                                     onerror="handleImageError(this)">
+                            </div>
                             <div><strong>${champ.name}</strong><br><small>${champ.title}</small></div>
                         </div>
                     `;
 
                     matchedSkills.forEach(skill => {
-                        // スキルアイコンURLの判定（パッシブか通常のスキルか）
                         const iconUrl = skill.isPassive 
                             ? `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/passive/${skill.image.full}`
                             : `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/spell/${skill.id}.png`;
 
+                        const keyClass = skill.keyType === 'R' ? 'skill-key skill-key-r' : 'skill-key';
+
                         html += `
                             <div class="skill-item">
-                                <img class="skill-icon" src="${iconUrl}">
+                                <span class="${keyClass}">${skill.keyType}</span>
+                                <div class="img-container skill-img-container">
+                                    <img class="fallback-img" 
+                                         src="${iconUrl}"
+                                         onerror="handleImageError(this)">
+                                </div>
                                 <div class="skill-info">
                                     <span class="highlight">【${skill.name}】</span>
                                     ${skill.description}
@@ -176,7 +333,9 @@
                     grid.appendChild(card);
                 }
             }
-        });
+        }
+
+        input.addEventListener('input', (e) => performSearch(e.target.value));
     </script>
 </body>
 </html>
