@@ -2,29 +2,124 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Skill Search - Woollest Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoL Skill Search - Woollest Pro</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .search-box { width: 100%; padding: 15px; font-size: 18px; margin-bottom: 20px; border-radius: 8px; border: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        .champ-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .champ-img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #c89b3c; }
-        .skill-item { font-size: 0.9em; background: #2a2a2a; padding: 8px; margin-top: 5px; border-radius: 5px; }
-        .highlight { color: #ffcc00; font-weight: bold; }
+        :root {
+            --gold: #c89b3c;
+            --dark-bg: #0a0a0c;
+            --card-bg: #1e2328;
+            --text: #f0e6d2;
+        }
+
+        body { 
+            font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif; 
+            background: var(--dark-bg); 
+            color: var(--text); 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { color: var(--gold); text-shadow: 0 0 10px rgba(200, 155, 60, 0.5); }
+
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        .search-box { 
+            width: 100%; 
+            padding: 15px; 
+            font-size: 18px; 
+            background: #1e2328;
+            border: 2px solid var(--gold);
+            color: white;
+            border-radius: 30px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 20px; 
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 30px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 4px; 
+            border: 1px solid #3c3c41;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); border-color: var(--gold); }
+
+        .champ-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            margin-bottom: 15px;
+            border-bottom: 1px solid #3c3c41;
+            padding-bottom: 10px;
+        }
+
+        .champ-img { 
+            width: 64px; height: 64px; 
+            border: 2px solid var(--gold);
+        }
+
+        .skill-item { 
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3); 
+            padding: 10px; 
+            margin-top: 10px; 
+            border-radius: 4px; 
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .skill-icon {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border: 1px solid #555;
+        }
+
+        .skill-info { flex-grow: 1; }
+
+        .highlight { color: var(--gold); font-weight: bold; display: block; margin-bottom: 4px; }
+        
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
     <h1>LoL スキル詳細検索</h1>
-    <input type="text" id="searchInput" class="search-box" placeholder="キーワードを入力（例：スタン、復活、シールド...）">
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="キーワードを入力（例：スタン、復活、移動速度）">
+    </div>
     
     <div id="resultGrid" class="grid"></div>
 
     <script>
+        const PATCH = "14.5.1"; // 取得した最新パッチに合わせる
         let championData = {};
 
-        // 1. ローカルのJSONファイルを読み込む
+        // JSON読み込み
         fetch('championFull.json')
             .then(response => response.json())
             .then(data => {
@@ -37,34 +132,42 @@
 
         input.addEventListener('input', () => {
             const query = input.value;
-            grid.innerHTML = ''; // 一旦クリア
-            if (query.length < 2) return; // 2文字以上で検索開始
+            grid.innerHTML = '';
+            if (query.length < 2) return;
 
             for (let key in championData) {
                 const champ = championData[key];
-                const allSkills = [champ.passive, ...champ.spells];
+                const allSkills = [
+                    { ...champ.passive, isPassive: true }, 
+                    ...champ.spells
+                ];
                 
-                // キーワードが含まれるスキルを抽出
                 const matchedSkills = allSkills.filter(s => s.description.includes(query));
 
                 if (matchedSkills.length > 0) {
                     const card = document.createElement('div');
                     card.className = 'card';
                     
-                    // チャンピオン画像と名前
                     let html = `
                         <div class="champ-header">
-                            <img class="champ-img" src="https://ddragon.leagueoflegends.com/cdn/14.5.1/img/champion/${champ.id}.png">
+                            <img class="champ-img" src="https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/champion/${champ.id}.png">
                             <div><strong>${champ.name}</strong><br><small>${champ.title}</small></div>
                         </div>
                     `;
 
-                    // ヒットしたスキルの詳細
                     matchedSkills.forEach(skill => {
+                        // スキルアイコンURLの判定（パッシブか通常のスキルか）
+                        const iconUrl = skill.isPassive 
+                            ? `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/passive/${skill.image.full}`
+                            : `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/spell/${skill.id}.png`;
+
                         html += `
                             <div class="skill-item">
-                                <span class="highlight">【${skill.name}】</span><br>
-                                ${skill.description}
+                                <img class="skill-icon" src="${iconUrl}">
+                                <div class="skill-info">
+                                    <span class="highlight">【${skill.name}】</span>
+                                    ${skill.description}
+                                </div>
                             </div>
                         `;
                     });
