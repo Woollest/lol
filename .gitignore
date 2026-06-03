@@ -1,0 +1,30 @@
+# Python関係の不要ファイル・仮想環境
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fortran/C関係のビルド生成物・一時ファイル
+*.o
+*.mod
+*.smod
+*.obj
+*.exe
+*.out
+
+# Rust関係のビルドフォルダ
+target/
+
+# Node.js (もしWeb系で使っていれば)
+node_modules/
+.pnpm-store/
+
+# --- LoLチェッカー用のデータフォルダ設定 ---
+# もし取得した試合データを特定のフォルダ（例: data/）に保存しているなら、以下を追加してください
+**/data/
+*.json
+*.csv
+*.log
